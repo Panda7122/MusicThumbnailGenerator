@@ -4,11 +4,17 @@ import clip
 from torch.nn.functional import cosine_similarity
 from transformers import BertTokenizer, BertModel
 from diffusers import StableDiffusionPipeline, DDPMScheduler
-
+import preprocess
 import pretty_midi
 import sys
 import os
+from datetime import datetime
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
+
+def getTOKEN_VECTOR(midi):
+    midi_obj = preprocess.miditoolkit.midi.parser.MidiFile(file_name)
+    encoding = preprocess.MIDI_to_encoding(midi_obj)
 def midi_to_note_sequence(midi_file_path):
     midi_data = pretty_midi.PrettyMIDI(midi_file_path)
     note_sequence = []
@@ -21,67 +27,57 @@ def midi_to_note_sequence(midi_file_path):
             note_sequence.append(note_name)
     # 將音符序列合併為字符串，例如 "C4 E4 G4 C5"
     return " ".join(note_sequence)
-class MusicBERTToDiffusionAdapterWithCLIP(nn.Module):
-    def _padding(self, token_vectors):
-        """
-        私有函數，用於填充或截斷 token vectors
-        :param token_vectors: [batch_size, seq_len, hidden_size]，來自 MusicBERT 的輸出
-        :return: 填充或截斷後的 token vectors
-        """
-        batch_size, seq_len, hidden_size = token_vectors.size()
-        
-        if seq_len > self.max_length:
-            token_vectors = token_vectors[:, :self.max_length, :]
-        elif seq_len < self.max_length:
-            padding_size = self.max_length - seq_len
-            padding = torch.zeros(batch_size, padding_size, hidden_size, device=token_vectors.device)
-            token_vectors = torch.cat((token_vectors, padding), dim=1)
-        
-        return token_vectors
-    def __init__(self, hidden_size=768, max_length=1024, diffusion_input_size=256, clip_model_name='ViT-B/32'):
-        """
-        
-        :param hidden_size: MusicBERT hidden_size（例如 768）
-        :param max_length: 固定的最大序列長度（用於 padding）
-        :param diffusion_input_size: Diffusion Model 的輸入大小
-        :param clip_model_name: CLIP 模型的名稱（如 'ViT-B/32'）
-        """
-        super(MusicBERTToDiffusionAdapterWithCLIP, self).__init__()
-        
+class MusicBERT2DiffusionAdapterWithCLIP(nn.Module):
+    
+
+    def __init__(self, max_token_dim=1024, hidden_dim=128, embedding_dim=64, bert_dim = 768,clip_model_name='ViT-B/32'):
+        super(MusicBERT2DiffusionAdapterWithCLIP, self).__init__()
+        # latent_dim of picture is 4*64*64
         # MusicBERT to Diffusion linear layer
-        self.linear = nn.Linear(hidden_size, diffusion_input_size)
-        # self.linear2 = nn.Linear(diffusion_input_size, diffusion_input_size*diffusion_input_size)
-        # self.linear3 = nn.Linear(diffusion_input_size*diffusion_input_size, diffusion_input_size*diffusion_input_size*diffusion_input_size)
-        # self.linear4 = nn.Linear(diffusion_input_size*diffusion_input_size*diffusion_input_size, diffusion_input_size*diffusion_input_size*diffusion_input_size*3)
+        latent_dim=16384
+        self.now_tokenDim = max_token_dim
+        self.embedding_dim = embedding_dim
+        self.hidden_dim = hidden_dim
+        self.bert_dim = bert_dim
+        self.latent_dim = latent_dim
         
-        # padding
-        self.max_length = max_length
+        # embedding layer
+        self.embedding = nn.Embedding(max_token_dim+bert_dim, embedding_dim)
+        # RNN
+        self.rnn = nn.LSTM(embedding_dim, hidden_dim, batch_first=True)
+        # full connect
+        self.linear = nn.Linear(hidden_dim, latent_dim)
         
         # load clip model as error function
         self.clip_model, self.clip_preprocess = clip.load(clip_model_name)
-        self.clip_model.eval() 
-        
-    def get_diffusion_input(self, token_vectors):
-        self._padding(token_vectors)
-        # Step 2: 通過線性層進行轉換
-        diffusion_input = self.linear(token_vectors)  # [batch_size, max_length, diffusion_input_size]
+        self.clip_model.eval()
+    def _padding(self, token_vectors):
+        batch_size, seq_len, hidden_size = token_vectors.size()
+        if seq_len < self.token_dim:
+            padding_size = self.max_length - seq_len
+            padding = torch.zeros(batch_size, padding_size, hidden_size, device=token_vectors.device)
+            token_vectors = torch.cat((token_vectors, padding), dim=1)
+        elif seq_len > self.token_dim:
+            token_vectors = token_vectors[:, :self.token_dim, :]
+        return token_vectors
+
+    def forward(self, token_vectors, lyris_vector):
+        tokens = torch.cat((token_vectors, lyris_vector), dim=1)
+        embedded_seq = self.embedding(tokens)
+        rnn_output, (h_n, c_n) = self.rnn(embedded_seq)
+        latent_vector = self.fc(h_n[-1])
+        latent_vector = latent_vector.view(-1, 4, 64, 64)
+        return latent_vector
+    def get_diffusion_input(self, token_vectors, lyris_vector):
+        token_vectors = self._padding(token_vectors)
+        token_vectors = self._padding(token_vectors)
+        diffusion_input = self.forward(token_vectors, lyris_vector)
         return diffusion_input
     
-    def calculate_similarity_loss(self, token_vectors, images):
-        """
-        計算音樂 token vectors 和圖片的 CLIP 相似性損失
-        :param token_vectors: [batch_size, seq_len, hidden_size]，來自 MusicBERT 的輸出
-        :param images: [batch_size, 3, H, W]，圖片張量
-        :return: 相似性損失
-        """
-        
-        # Step 3: 提取 MusicBERT token vector 的 CLIP 嵌入
-        music_clip_embeds = self.clip_model.encode_text(token_vectors)  # [batch_size, clip_embed_dim]
-        
-        # Step 4: 將圖片處理並提取 CLIP 圖片嵌入
+    def calculate_similarity_loss(self, token_vectors, lyris_vector, images):
+        tokens = torch.cat((token_vectors, lyris_vector), dim=1)
+        music_clip_embeds = self.clip_model.encode_text(tokens)  # [batch_size, clip_embed_dim]
         image_clip_embeds = self.clip_model.encode_image(images)  # [batch_size, clip_embed_dim]
-        
-        # Step 5: 計算音樂和圖片嵌入的相似性損失
         similarity_loss = 1 - cosine_similarity(music_clip_embeds, image_clip_embeds).mean()
 
         return similarity_loss
@@ -94,66 +90,77 @@ class MusicBERTToDiffusionAdapterWithCLIP(nn.Module):
 
 
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
-def traning(midifile:str,musicBert,musicTokenizer, Adaptermodel:MusicBERTToDiffusionAdapterWithCLIP, diffusionModel):
+def traning(lyrisfile:str, midifile:str,musicBert,BERT, musicTokenizer, bertTokenizer, Adaptermodel:MusicBERT2DiffusionAdapterWithCLIP, diffusionModel):
     # Initialize the model
     # note_sequence = midi_to_note_sequence(midifile)
     # tokenization the note
-    inputs = musicTokenizer(midifile, return_tensors="pt", padding=True, truncation=True, max_length=512)
-    # inputs = musicTokenizer(note_sequence, return_tensors="pt", padding=True, truncation=True, max_length=512)
+    musicInput = musicTokenizer(midifile)
+    lyrisinputs = bertTokenizer(lyrisfile, return_tensors="pt", padding=True, truncation=True, max_length=Adaptermodel.bert_dim)
+    
     with torch.no_grad():
-        token_vectors = musicBert(**inputs).last_hidden_state
+        music_token_vectors = musicBert(**lyrisinputs).last_hidden_state
+        lyris_vector = BERT(**lyrisinputs).last_hidden_state[:, 0, :]
     # Get diffusion input
-    diffusion_input = Adaptermodel.get_diffusion_input(token_vectors)
+    diffusion_input = Adaptermodel.get_diffusion_input(music_token_vectors, lyris_vector)
+    print("Diffusion Input Shape:", diffusion_input.shape)
+    diffusion_input = diffusion_input.view(diffusion_input.size(0), -1) 
+    # Generate images using the diffusion model
+    images = diffusionModel(prompt=midifile.split('.')[0], latents=diffusion_input).images
+    # Calculate similarity loss
+    similarity_loss = Adaptermodel.calculate_similarity_loss(music_token_vectors, lyris_vector, images)
+    similarity_loss.backward()
+    print("Similarity Loss:", similarity_loss.item())
+    print('saving model')
+    nowtime = datetime.now().strftime("%Y%m%d_%H%M%S")
+    model_path = f"model_{nowtime}.pt"
+    Adaptermodel.save_model(model_path)
+    
+def predict(lyrisfile:str, midifile:str,musicBert,BERT, musicTokenizer, bertTokenizer, Adaptermodel:MusicBERT2DiffusionAdapterWithCLIP, diffusionModel):
+    # Initialize the model
+    musicInput = musicTokenizer(midifile)
+    lyrisinputs = bertTokenizer(lyrisfile, return_tensors="pt", padding=True, truncation=True, max_length=Adaptermodel.bert_dim)
+    
+    with torch.no_grad():
+        music_token_vectors = musicBert(**lyrisinputs).last_hidden_state
+        lyris_vector = BERT(**lyrisinputs).last_hidden_state[:, 0, :]
+    # Get diffusion input
+    diffusion_input = Adaptermodel.get_diffusion_input(music_token_vectors, lyris_vector)
     print("Diffusion Input Shape:", diffusion_input.shape)
     diffusion_input = diffusion_input.view(diffusion_input.size(0), -1) 
     # Generate images using the diffusion model
     images = diffusionModel(prompt=midifile.split('.')[0], latents=diffusion_input).images
     # Calculate similarity loss
     similarity_loss = Adaptermodel.calculate_similarity_loss(token_vectors, images)
-    similarity_loss.backward()
-    print("Similarity Loss:", similarity_loss.item())
-def predict(midifile:str,musicBert,musicTokenizer, Adaptermodel:MusicBERTToDiffusionAdapterWithCLIP, diffusionModel):
-    # Initialize the model
-    note_sequence = midi_to_note_sequence(midifile)
-    # tokenization the note
-    inputs = musicTokenizer(note_sequence, return_tensors="pt", padding=True, truncation=True, max_length=512)
-    with torch.no_grad():
-        token_vectors = musicBert(**inputs).last_hidden_state
-    # Get diffusion input
-    diffusion_input = Adaptermodel.get_diffusion_input(token_vectors)
-    print("Diffusion Input Shape:", diffusion_input.shape)
-    diffusion_input = diffusion_input.view(diffusion_input.size(0), -1) 
-    images = diffusionModel(diffusion_input)
-    # Calculate similarity loss
-    similarity_loss = Adaptermodel.calculate_similarity_loss(token_vectors, images)
     print("Similarity Loss:", similarity_loss.item())
     return images, similarity_loss
 def main():
-    print('start')
-    # tokenizer = BertTokenizer.from_pretrained("ruru2701/musicbert-v1.1")
-    # musicbert_model = BertModel.from_pretrained("ruru2701/musicbert-v1.1")
+    print(f'start with device {device}')
+    # music_tokenizer = BertTokenizer.from_pretrained("ruru2701/musicbert-v1.1")
+    music_tokenizer = getTOKEN_VECTOR
+    musicbert_model = BertModel.from_pretrained("ruru2701/musicbert-v1.1") # tsting
     tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
-    musicbert_model = BertModel.from_pretrained("bert-base-uncased")
-    model = MusicBERTToDiffusionAdapterWithCLIP()
-    diffusionModelName = "CompVis/stable-diffusion-v-1-4"
+    bert_model = BertModel.from_pretrained("bert-base-uncased")
+    model = MusicBERT2DiffusionAdapterWithCLIP()
+    diffusionModelName = "CompVis/stable-diffusion-v1-4"
     diffusionModel  = StableDiffusionPipeline.from_pretrained(diffusionModelName,
                                                variant="fp16", torch_dtype=torch.float16)
     print('done init')
     
     # Move models to the appropriate device
-    musicbert_model.to(device)
+    bert_model.to(device)
     model.to(device)
     diffusionModel.to(device)
-    musicbert_model.eval()
+    bert_model.eval()
     diffusionModel.eval()
     # Directory containing MIDI files
-    midi_dir = "./midifile"
+    midi_dir = "./traningData/midi"
+    lyris_dir = "./traningData/lyris"
 
     # Get list of all MIDI files in the directory
     midifiles = [os.path.join(midi_dir, f) for f in os.listdir(midi_dir) if f.endswith('.mid')]
-    for midifile in midifiles:
-        traning(midifile, musicbert_model, tokenizer, model, diffusionModel)
-    
+    lyrisfiles = [os.path.join(lyris_dir, f) for f in os.listdir(midi_dir) if f.endswith('.txt')]
+    for midifile, lyrisfile in zip(midifiles, lyrisfiles):
+        traning(lyrisfile, midifile, musicbert_model, bert_model, music_tokenizer, tokenizer, model, diffusionModel)
+    print('done')
 if __name__ == "__main__":
     main()
