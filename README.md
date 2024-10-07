@@ -1,4 +1,4 @@
-# Music's Cover generator
+# Music's Cover generator[WIP]
 
 ## discription
 
