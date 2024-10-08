@@ -31,19 +31,18 @@ def midi_to_note_sequence(midi_file_path):
 class MusicBERT2DiffusionAdapterWithCLIP(nn.Module):
     
 
-    def __init__(self, max_token_dim=1024, hidden_dim=128, embedding_dim=64, bert_dim = 768,clip_model_name='ViT-B/32'):
+    def __init__(self, hidden_dim=128, embedding_dim=64, bert_dim = 768,clip_model_name='ViT-B/32'):
         super(MusicBERT2DiffusionAdapterWithCLIP, self).__init__()
         # latent_dim of picture is 4*64*64
         # MusicBERT to Diffusion linear layer
         latent_dim=16384
-        self.now_tokenDim = max_token_dim
         self.embedding_dim = embedding_dim
         self.hidden_dim = hidden_dim
         self.bert_dim = bert_dim
         self.latent_dim = latent_dim
         
         # embedding layer
-        self.embedding = nn.Embedding(max_token_dim+bert_dim, embedding_dim)
+        self.embedding = nn.Embedding(bert_dim, embedding_dim)
         # RNN
         self.rnn = nn.LSTM(embedding_dim, hidden_dim, batch_first=True)
         # full connect
@@ -62,22 +61,18 @@ class MusicBERT2DiffusionAdapterWithCLIP(nn.Module):
             token_vectors = token_vectors[:, :self.token_dim, :]
         return token_vectors
 
-    def forward(self, token_vectors, lyris_vector):
-        tokens = torch.cat((token_vectors, lyris_vector), dim=1)
-        embedded_seq = self.embedding(tokens)
+    def forward(self,  lyris_vector):
+        embedded_seq = self.embedding(lyris_vector)
         rnn_output, (h_n, c_n) = self.rnn(embedded_seq)
         latent_vector = self.fc(h_n[-1])
         latent_vector = latent_vector.view(-1, 4, 64, 64)
         return latent_vector
-    def get_diffusion_input(self, token_vectors, lyris_vector):
-        token_vectors = self._padding(token_vectors)
-        token_vectors = self._padding(token_vectors)
-        diffusion_input = self.forward(token_vectors, lyris_vector)
+    def get_diffusion_input(self, lyris_vector):
+        diffusion_input = self.forward(lyris_vector)
         return diffusion_input
     
-    def calculate_similarity_loss(self, token_vectors, lyris_vector, images):
-        tokens = torch.cat((token_vectors, lyris_vector), dim=1)
-        music_clip_embeds = self.clip_model.encode_text(tokens)  # [batch_size, clip_embed_dim]
+    def calculate_similarity_loss(self, lyris_vector, images):
+        music_clip_embeds = self.clip_model.encode_text(lyris_vector)  # [batch_size, clip_embed_dim]
         image_clip_embeds = self.clip_model.encode_image(images)  # [batch_size, clip_embed_dim]
         similarity_loss = 1 - cosine_similarity(music_clip_embeds, image_clip_embeds).mean()
 
@@ -95,14 +90,12 @@ def traning(lyrisfile:str, midifile:str,musicBert,BERT, musicTokenizer, bertToke
     # Initialize the model
     # note_sequence = midi_to_note_sequence(midifile)
     # tokenization the note
-    musicInput = musicTokenizer(midifile)
     lyrisinputs = bertTokenizer(lyrisfile, return_tensors="pt", padding=True, truncation=True, max_length=Adaptermodel.bert_dim)
     
     with torch.no_grad():
-        music_token_vectors = musicBert(**musicInput).last_hidden_state
         lyris_vector = BERT(**lyrisinputs).last_hidden_state[:, 0, :]
     # Get diffusion input
-    diffusion_input = Adaptermodel.get_diffusion_input(music_token_vectors, lyris_vector)
+    diffusion_input = Adaptermodel.get_diffusion_input(lyris_vector)
     print("Diffusion Input Shape:", diffusion_input.shape)
     diffusion_input = diffusion_input.view(diffusion_input.size(0), -1) 
     # Generate images using the diffusion model
@@ -136,9 +129,6 @@ def predict(lyrisfile:str, midifile:str,musicBert,BERT, musicTokenizer, bertToke
     return images, similarity_loss
 def main():
     print(f'start with device {device}')
-    # music_tokenizer = BertTokenizer.from_pretrained("ruru2701/musicbert-v1.1")
-    music_tokenizer = getTOKEN_VECTOR
-    musicbert_model = BertModel.from_pretrained("ruru2701/musicbert-v1.1") # tsting
     tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
     bert_model = BertModel.from_pretrained("bert-base-uncased")
     model = MusicBERT2DiffusionAdapterWithCLIP()
@@ -154,14 +144,12 @@ def main():
     bert_model.eval()
     diffusionModel.eval()
     # Directory containing MIDI files
-    midi_dir = "./traningData/midi"
     lyris_dir = "./traningData/lyris"
 
     # Get list of all MIDI files in the directory
-    midifiles = [os.path.join(midi_dir, f) for f in os.listdir(midi_dir) if f.endswith('.mid')]
     lyrisfiles = [os.path.join(lyris_dir, f) for f in os.listdir(lyris_dir) if f.endswith('.txt')]
-    for midifile, lyrisfile in zip(midifiles, lyrisfiles):
-        traning(lyrisfile, midifile, musicbert_model, bert_model, music_tokenizer, tokenizer, model, diffusionModel)
+    for lyrisfile in lyrisfiles:
+        traning(lyrisfile, bert_model, music_tokenizer, tokenizer, model, diffusionModel)
     print('done')
 if __name__ == "__main__":
     main()
