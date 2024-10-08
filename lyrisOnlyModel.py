@@ -147,7 +147,7 @@ def main():
     # Get list of all MIDI files in the directory
     lyrisfiles = [os.path.join(lyris_dir, f) for f in os.listdir(lyris_dir) if f.endswith('.txt')]
     for lyrisfile in lyrisfiles:
-        traning(lyrisfile, bert_model, music_tokenizer, tokenizer, model, diffusionModel)
+        traning(lyrisfile, bert_model, tokenizer, model, diffusionModel)
     print('done')
 if __name__ == "__main__":
     main()
