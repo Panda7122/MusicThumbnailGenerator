@@ -109,8 +109,8 @@ def predict(lyrisfile:str, midifile:str,musicBert,BERT, musicTokenizer, bertToke
     return images, similarity_loss
 def main():
     print(f'start with device {device}')
-    tokenizer = BertTokenizer.from_pretrained("https://huggingface.co/google-bert/bert-base-multilingual-uncased")
-    bert_model = BertModel.from_pretrained("https://huggingface.co/google-bert/bert-base-multilingual-uncased")
+    tokenizer = BertTokenizer.from_pretrained("google-bert/bert-base-multilingual-uncased")
+    bert_model = BertModel.from_pretrained("google-bert/bert-base-multilingual-uncased")
     model = MusicBERT2DiffusionAdapterWithCLIP()
     diffusionModelName = "CompVis/stable-diffusion-v1-4"
     diffusionModel  = StableDiffusionPipeline.from_pretrained(diffusionModelName,
