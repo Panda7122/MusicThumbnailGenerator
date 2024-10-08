@@ -31,7 +31,7 @@ class MusicBERT2DiffusionAdapterWithCLIP(nn.Module):
         self.linear = nn.Linear(hidden_dim, latent_dim)
         
         # load clip model as error function
-        self.clip_model, self.clip_preprocess = clip.load(clip_model_name)
+        self.clip_model, self.clip_preprocess = clip.load(clip_model_name,cache_dir="/tmp2/41147009S/.cache")
         self.clip_model.eval()
     def _padding(self, token_vectors):
         batch_size, seq_len, hidden_size = token_vectors.size()
