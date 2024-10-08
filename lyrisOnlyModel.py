@@ -9,7 +9,7 @@ import sys
 import os
 from datetime import datetime
 device = "cuda" if torch.cuda.is_available() else "cpu"
-
+os.environ['HF_HOME'] = '/tmp2/41147009S/.cache/'
 class MusicBERT2DiffusionAdapterWithCLIP(nn.Module):
     
 
