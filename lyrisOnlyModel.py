@@ -4,30 +4,12 @@ import clip
 from torch.nn.functional import cosine_similarity
 from transformers import BertTokenizer, BertModel
 from diffusers import StableDiffusionPipeline, DDPMScheduler
-import preprocess
 import pretty_midi
 import sys
 import os
 from datetime import datetime
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-
-def getTOKEN_VECTOR(midi):
-    midi_obj = preprocess.miditoolkit.midi.parser.MidiFile(midi)
-    encoding = preprocess.MIDI_to_encoding(midi_obj)
-    return torch.tensor(encoding, dtype=torch.Long, device=device)
-def midi_to_note_sequence(midi_file_path):
-    midi_data = pretty_midi.PrettyMIDI(midi_file_path)
-    note_sequence = []
-
-    # 遍歷所有樂器和音符
-    for instrument in midi_data.instruments:
-        for note in instrument.notes:
-            # 將 MIDI 數值轉換為音符名稱 (如 C4)
-            note_name = pretty_midi.note_number_to_name(note.pitch)
-            note_sequence.append(note_name)
-    # 將音符序列合併為字符串，例如 "C4 E4 G4 C5"
-    return " ".join(note_sequence)
 class MusicBERT2DiffusionAdapterWithCLIP(nn.Module):
     
 
@@ -127,8 +109,8 @@ def predict(lyrisfile:str, midifile:str,musicBert,BERT, musicTokenizer, bertToke
     return images, similarity_loss
 def main():
     print(f'start with device {device}')
-    tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
-    bert_model = BertModel.from_pretrained("bert-base-uncased")
+    tokenizer = BertTokenizer.from_pretrained("https://huggingface.co/google-bert/bert-base-multilingual-uncased")
+    bert_model = BertModel.from_pretrained("https://huggingface.co/google-bert/bert-base-multilingual-uncased")
     model = MusicBERT2DiffusionAdapterWithCLIP()
     diffusionModelName = "CompVis/stable-diffusion-v1-4"
     diffusionModel  = StableDiffusionPipeline.from_pretrained(diffusionModelName,
