@@ -101,30 +101,28 @@ def traning(lyrisfile:str, midifile:str,musicBert,BERT, musicTokenizer, bertToke
     # Generate images using the diffusion model
     images = diffusionModel(prompt=midifile.split('.')[0], latents=diffusion_input).images
     # Calculate similarity loss
-    similarity_loss = Adaptermodel.calculate_similarity_loss(music_token_vectors, lyris_vector, images)
+    similarity_loss = Adaptermodel.calculate_similarity_loss(lyris_vector, images)
     similarity_loss.backward()
     print("Similarity Loss:", similarity_loss.item())
     print('saving model')
     nowtime = datetime.now().strftime("%Y%m%d_%H%M%S")
-    model_path = f"model_{nowtime}.pt"
+    model_path = f"./savePoint/model_{nowtime}.pt"
     Adaptermodel.save_model(model_path)
     
 def predict(lyrisfile:str, midifile:str,musicBert,BERT, musicTokenizer, bertTokenizer, Adaptermodel:MusicBERT2DiffusionAdapterWithCLIP, diffusionModel):
     # Initialize the model
-    musicInput = musicTokenizer(midifile)
     lyrisinputs = bertTokenizer(lyrisfile, return_tensors="pt", padding=True, truncation=True, max_length=Adaptermodel.bert_dim)
     
     with torch.no_grad():
-        music_token_vectors = musicBert(**lyrisinputs).last_hidden_state
         lyris_vector = BERT(**lyrisinputs).last_hidden_state[:, 0, :]
     # Get diffusion input
-    diffusion_input = Adaptermodel.get_diffusion_input(music_token_vectors, lyris_vector)
+    diffusion_input = Adaptermodel.get_diffusion_input(lyris_vector)
     print("Diffusion Input Shape:", diffusion_input.shape)
     diffusion_input = diffusion_input.view(diffusion_input.size(0), -1) 
     # Generate images using the diffusion model
     images = diffusionModel(prompt=midifile.split('.')[0], latents=diffusion_input).images
     # Calculate similarity loss
-    similarity_loss = Adaptermodel.calculate_similarity_loss(token_vectors, images)
+    similarity_loss = Adaptermodel.calculate_similarity_loss(lyris_vector, images)
     print("Similarity Loss:", similarity_loss.item())
     return images, similarity_loss
 def main():
