@@ -113,8 +113,8 @@ def main():
     bert_model = BertModel.from_pretrained("google-bert/bert-base-multilingual-uncased",cache_dir="/tmp2/41147009S/.cache")
     model = MusicBERT2DiffusionAdapterWithCLIP()
     diffusionModelName = "CompVis/stable-diffusion-v1-4"
-    diffusionModel  = StableDiffusionPipeline.from_pretrained(diffusionModelName,
-                                               variant="fp16", torch_dtype=torch.float16)
+    diffusionModel = StableDiffusionPipeline.from_pretrained(diffusionModelName,
+                                               variant="fp16", torch_dtype=torch.float16, cache_dir="/tmp2/41147009S/.cache")
     print('done init')
     
     # Move models to the appropriate device
