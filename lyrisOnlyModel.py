@@ -9,7 +9,7 @@ import sys
 import os
 from datetime import datetime
 device = "cuda" if torch.cuda.is_available() else "cpu"
-os.environ['HF_HOME'] = '/tmp2/41147009S/.cache/'
+
 class MusicBERT2DiffusionAdapterWithCLIP(nn.Module):
     
 
@@ -109,8 +109,8 @@ def predict(lyrisfile:str, midifile:str,musicBert,BERT, musicTokenizer, bertToke
     return images, similarity_loss
 def main():
     print(f'start with device {device}')
-    tokenizer = BertTokenizer.from_pretrained("google-bert/bert-base-multilingual-uncased")
-    bert_model = BertModel.from_pretrained("google-bert/bert-base-multilingual-uncased")
+    tokenizer = BertTokenizer.from_pretrained("google-bert/bert-base-multilingual-uncased",cache_dir="/tmp2/41147009S/.cache")
+    bert_model = BertModel.from_pretrained("google-bert/bert-base-multilingual-uncased",cache_dir="/tmp2/41147009S/.cache")
     model = MusicBERT2DiffusionAdapterWithCLIP()
     diffusionModelName = "CompVis/stable-diffusion-v1-4"
     diffusionModel  = StableDiffusionPipeline.from_pretrained(diffusionModelName,
