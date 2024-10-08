@@ -122,7 +122,6 @@ def main():
     model.to(device)
     diffusionModel.to(device)
     bert_model.eval()
-    diffusionModel.eval()
     # Directory containing MIDI files
     lyris_dir = "./traningData/lyris"
 
