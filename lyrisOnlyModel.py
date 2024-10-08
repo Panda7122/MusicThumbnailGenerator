@@ -8,7 +8,7 @@ import pretty_midi
 import sys
 import os
 from datetime import datetime
-device = "cuda" if torch.cuda.is_available() else "cpu"
+device = "cuda"
 
 class MusicBERT2DiffusionAdapterWithCLIP(nn.Module):
     
