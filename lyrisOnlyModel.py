@@ -8,8 +8,9 @@ import pretty_midi
 import sys
 import os
 from datetime import datetime
+import pandas as pd
 device = "cuda"
-
+cacheLoc = "/tmp2/41147009S/.cache"
 class MusicBERT2DiffusionAdapterWithCLIP(nn.Module):
     
 
@@ -31,7 +32,7 @@ class MusicBERT2DiffusionAdapterWithCLIP(nn.Module):
         self.linear = nn.Linear(hidden_dim, latent_dim)
         
         # load clip model as error function
-        self.clip_model, self.clip_preprocess = clip.load(clip_model_name, device=device, download_root="/tmp2/41147009S/.cache")
+        self.clip_model, self.clip_preprocess = clip.load(clip_model_name, device=device, download_root=cacheLoc)
         self.clip_model.eval()
     def _padding(self, token_vectors):
         batch_size, seq_len, hidden_size = token_vectors.size()
@@ -68,7 +69,7 @@ class MusicBERT2DiffusionAdapterWithCLIP(nn.Module):
 
 
 
-def traning(lyrisfile:str, midifile:str,musicBert,BERT, musicTokenizer, bertTokenizer, Adaptermodel:MusicBERT2DiffusionAdapterWithCLIP, diffusionModel):
+def traning(lyrisfile:str, BERT, bertTokenizer, Adaptermodel:MusicBERT2DiffusionAdapterWithCLIP, diffusionModel, songName, artist):
     # Initialize the model
     # note_sequence = midi_to_note_sequence(midifile)
     # tokenization the note
@@ -81,7 +82,8 @@ def traning(lyrisfile:str, midifile:str,musicBert,BERT, musicTokenizer, bertToke
     print("Diffusion Input Shape:", diffusion_input.shape)
     diffusion_input = diffusion_input.view(diffusion_input.size(0), -1) 
     # Generate images using the diffusion model
-    images = diffusionModel(prompt=midifile.split('.')[0], latents=diffusion_input).images
+    stringOfPromot = f'cover for "{songName}" and artist is "{artist}", show "{songName}" as title and {artist} as subtitle'
+    images = diffusionModel(prompt=stringOfPromot, latents=diffusion_input).images
     # Calculate similarity loss
     similarity_loss = Adaptermodel.calculate_similarity_loss(lyris_vector, images)
     similarity_loss.backward()
@@ -91,7 +93,7 @@ def traning(lyrisfile:str, midifile:str,musicBert,BERT, musicTokenizer, bertToke
     model_path = f"./savePoint/model_{nowtime}.pt"
     Adaptermodel.save_model(model_path)
     
-def predict(lyrisfile:str, midifile:str,musicBert,BERT, musicTokenizer, bertTokenizer, Adaptermodel:MusicBERT2DiffusionAdapterWithCLIP, diffusionModel):
+def predict(lyrisfile:str, BERT, bertTokenizer, Adaptermodel:MusicBERT2DiffusionAdapterWithCLIP, diffusionModel, songName, artist):
     # Initialize the model
     lyrisinputs = bertTokenizer(lyrisfile, return_tensors="pt", padding=True, truncation=True, max_length=Adaptermodel.bert_dim)
     
@@ -102,19 +104,21 @@ def predict(lyrisfile:str, midifile:str,musicBert,BERT, musicTokenizer, bertToke
     print("Diffusion Input Shape:", diffusion_input.shape)
     diffusion_input = diffusion_input.view(diffusion_input.size(0), -1) 
     # Generate images using the diffusion model
-    images = diffusionModel(prompt=midifile.split('.')[0], latents=diffusion_input).images
+    stringOfPromot = f'cover for "{songName}" and artist is "{artist}", show "{songName}" as title and {artist} as subtitle'
+    
+    images = diffusionModel(prompt=stringOfPromot, latents=diffusion_input).images
     # Calculate similarity loss
     similarity_loss = Adaptermodel.calculate_similarity_loss(lyris_vector, images)
     print("Similarity Loss:", similarity_loss.item())
     return images, similarity_loss
 def main():
     print(f'start with device {device}')
-    tokenizer = BertTokenizer.from_pretrained("google-bert/bert-base-multilingual-uncased",cache_dir="/tmp2/41147009S/.cache")
-    bert_model = BertModel.from_pretrained("google-bert/bert-base-multilingual-uncased",cache_dir="/tmp2/41147009S/.cache")
+    tokenizer = BertTokenizer.from_pretrained("google-bert/bert-base-multilingual-uncased",cache_dir=cacheLoc)
+    bert_model = BertModel.from_pretrained("google-bert/bert-base-multilingual-uncased",cache_dir=cacheLoc)
     model = MusicBERT2DiffusionAdapterWithCLIP()
     diffusionModelName = "CompVis/stable-diffusion-v1-4"
     diffusionModel = StableDiffusionPipeline.from_pretrained(diffusionModelName,
-                                               variant="fp16", torch_dtype=torch.float16, cache_dir="/tmp2/41147009S/.cache")
+                                               variant="fp16", torch_dtype=torch.float16, cache_dir=cacheLoc)
     print('done init')
     
     # Move models to the appropriate device
@@ -123,12 +127,15 @@ def main():
     diffusionModel.to(device)
     bert_model.eval()
     # Directory containing MIDI files
-    lyris_dir = "./traningData/lyris"
+    lyrics_df = pd.read_csv('./kaggleData/small_song_lyrics.csv')
 
-    # Get list of all MIDI files in the directory
-    lyrisfiles = [os.path.join(lyris_dir, f) for f in os.listdir(lyris_dir) if f.endswith('.txt')]
-    for lyrisfile in lyrisfiles:
-        traning(lyrisfile, bert_model, tokenizer, model, diffusionModel)
+    # Iterate over the lyrics
+    for index, row in lyrics_df.iterrows():
+        # Artist,Title,Lyric
+        lyrisfile = row['Lyric']
+        artist = row['Artist']
+        title = row['Title']
+        traning(lyrisfile, bert_model, tokenizer, model, diffusionModel, title, artist)
     print('done')
 if __name__ == "__main__":
     main()
