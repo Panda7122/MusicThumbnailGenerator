@@ -76,7 +76,8 @@ def traning(lyrisfile:str, BERT, bertTokenizer, Adaptermodel:MusicBERT2Diffusion
     lyrisinputs = bertTokenizer(lyrisfile, return_tensors="pt", padding=True, truncation=True, max_length=Adaptermodel.bert_dim)
     
     with torch.no_grad():
-        lyris_vector = BERT(**lyrisinputs).last_hidden_state[:, 0, :]
+        lyrisinputs = {key: value.to(device) for key, value in lyrisinputs.items()}
+        lyris_vector = BERT(**lyrisinputs).last_hidden_state[:, 0, :].to(device)
     # Get diffusion input
     diffusion_input = Adaptermodel.get_diffusion_input(lyris_vector)
     print("Diffusion Input Shape:", diffusion_input.shape)
@@ -98,7 +99,7 @@ def predict(lyrisfile:str, BERT, bertTokenizer, Adaptermodel:MusicBERT2Diffusion
     lyrisinputs = bertTokenizer(lyrisfile, return_tensors="pt", padding=True, truncation=True, max_length=Adaptermodel.bert_dim)
     
     with torch.no_grad():
-        lyris_vector = BERT(**lyrisinputs).last_hidden_state[:, 0, :]
+        lyris_vector = BERT(**lyrisinputs).last_hidden_state[:, 0, :].to(device)
     # Get diffusion input
     diffusion_input = Adaptermodel.get_diffusion_input(lyris_vector)
     print("Diffusion Input Shape:", diffusion_input.shape)

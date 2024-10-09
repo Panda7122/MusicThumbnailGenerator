@@ -12,7 +12,7 @@ COPY ./lyrisOnlyModel.py /app
 COPY ./kaggleData/small_song_lyrics.csv  /app/kaggleData
 
 # Install any needed packages specified in requirements.txt
-RUN pip3 install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir -r requirement
 
 # Install CLIP from GitHub
 # RUN pip3 install git+https://github.com/openai/CLIP.git
