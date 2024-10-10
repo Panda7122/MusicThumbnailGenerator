@@ -3,7 +3,7 @@ numpy>=1.26.0
 beautifulsoup4>=4.12.2
 requests>=2.32.2
 music21>=9.1.0
-tensorflow<=2.15.1
+tensorflow>=2.15.1
 selenium>=4.14.0
 seaborn>=0.13.0
 torch>=2.1.0
@@ -28,7 +28,6 @@ diffusers>=0.30.3
 accelerate>=0.34.2
 miditoolkit>=1.0.1
 clip @ git+https://github.com/openai/CLIP.git@dcba3cb2e2827b402d2701e7e1c7d9fed8a20ef1
-basic-pitch>=0.4.0
 youtube-search-python>=1.6.6
 pytubefix>=7.4.0
 webdriver-manager>=4.0.2
@@ -51,3 +50,4 @@ torchaudio
 yt-dlp
 https://github.com/coletdjnz/yt-dlp-youtube-oauth2/archive/refs/heads/master.zip
 gradio_log
+spaces>=0.30.3
