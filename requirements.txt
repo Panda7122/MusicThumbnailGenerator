@@ -31,23 +31,3 @@ clip @ git+https://github.com/openai/CLIP.git@dcba3cb2e2827b402d2701e7e1c7d9fed8
 youtube-search-python>=1.6.6
 pytubefix>=7.4.0
 webdriver-manager>=4.0.2
-mirdata
-mido
-git+https://github.com/craffel/mir_eval.git
-git+https://github.com/katsura-jp/pytorch-cosine-annealing-with-warmup.git
-matplotlib
-lightning>=2.2.1
-pytest-timeout
-pytest
-deprecated
-librosa
-einops
-wandb
-smart-open
-python-dotenv
---extra-index-url https://download.pytorch.org/whl/cu113
-torchaudio
-yt-dlp
-https://github.com/coletdjnz/yt-dlp-youtube-oauth2/archive/refs/heads/master.zip
-gradio_log
-spaces>=0.30.3
