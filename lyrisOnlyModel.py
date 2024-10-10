@@ -14,7 +14,7 @@ cacheLoc = "/tmp2/41147009S/.cache"
 class MusicBERT2DiffusionAdapterWithCLIP(nn.Module):
     
 
-    def __init__(self, hidden_dim=128, embedding_dim=64, bert_dim = 768,clip_model_name='ViT-B/32'):
+    def __init__(self, hidden_dim=8192, embedding_dim=4096, bert_dim = 768,clip_model_name='ViT-B/32'):
         super(MusicBERT2DiffusionAdapterWithCLIP, self).__init__()
         # latent_dim of picture is 4*64*64
         # MusicBERT to Diffusion linear layer
@@ -25,7 +25,7 @@ class MusicBERT2DiffusionAdapterWithCLIP(nn.Module):
         self.latent_dim = latent_dim
         
         # embedding layer
-        self.embedding = nn.Embedding(bert_dim, embedding_dim)
+        self.embedding = nn.Linear(bert_dim, embedding_dim)
         # RNN
         self.rnn = nn.LSTM(embedding_dim, hidden_dim, batch_first=True)
         # full connect
