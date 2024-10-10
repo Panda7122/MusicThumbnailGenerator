@@ -73,7 +73,7 @@ def traning(lyrisfile:str, BERT, bertTokenizer, Adaptermodel:MusicBERT2Diffusion
     # Initialize the model
     # note_sequence = midi_to_note_sequence(midifile)
     # tokenization the note
-    lyrisinputs = bertTokenizer(lyrisfile, return_tensors="pt", padding=True, truncation=True, max_length=Adaptermodel.bert_dim)
+    lyrisinputs = bertTokenizer(lyrisfile, return_tensors="pt", padding=True, truncation=True, max_length=512)
     
     with torch.no_grad():
         lyrisinputs = {key: value.to(device) for key, value in lyrisinputs.items()}
