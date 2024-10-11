@@ -10,7 +10,7 @@ import os
 from datetime import datetime
 import pandas as pd
 device = "cuda"
-cacheLoc = "/tmp2/41147009S/.cache"
+cacheLoc = ".cache"
 class MusicBERT2DiffusionAdapterWithCLIP(nn.Module):
     
 
