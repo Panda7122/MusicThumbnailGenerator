@@ -64,8 +64,8 @@ class MusicBERT2DiffusionAdapterWithCLIP(nn.Module):
         return diffusion_input, token
     
     def calculate_similarity_loss(self, lyris_vector, images_path):
-        image1_preprocess = self.clip_preprocess(Image.open(images_path)).unsqueeze(0).to(device)
-        image_clip_embeds = self.clip_model.encode_image(image1_preprocess)  
+        image_preprocess = self.clip_preprocess(Image.open(images_path)).unsqueeze(0).to(device)
+        image_clip_embeds = self.clip_model.encode_image(image_preprocess)  
                 
         
         image_clip_embeds = image_clip_embeds / image_clip_embeds.norm(dim=-1, keepdim=True)
@@ -121,7 +121,8 @@ def traning(lyrisfile:str, BERT, bertTokenizer, Adaptermodel:MusicBERT2Diffusion
     # Calculate similarity loss
 
     similarity_loss = Adaptermodel.calculate_similarity_loss(TOKEN, image_path)
-    image_clip_embeds = Adaptermodel.clip_model.encode_image(images[0])  # [batch_size, clip_embed_dim]
+    image_preprocess = Adaptermodel.clip_preprocess(Image.open(image_path)).unsqueeze(0).to(device)
+    image_clip_embeds = Adaptermodel.clip_model.encode_image(image_preprocess)  # [batch_size, clip_embed_dim]
     optimizer = optim.Adam([TOKEN, image_clip_embeds], lr=learningRate)
     optimizer.zero_grad()
     similarity_loss.backward() # calculate gradient
