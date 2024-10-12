@@ -84,6 +84,7 @@ def traning(lyrisfile:str, BERT, bertTokenizer, Adaptermodel:MusicBERT2Diffusion
     # Initialize the model
     # note_sequence = midi_to_note_sequence(midifile)
     # tokenization the note
+    print(f'start training with {artist}-{songName}')
     lyrisinputs = bertTokenizer(lyrisfile, return_tensors="pt", padding=True, truncation=True, max_length=512)
     
     with torch.no_grad():
@@ -104,7 +105,7 @@ def traning(lyrisfile:str, BERT, bertTokenizer, Adaptermodel:MusicBERT2Diffusion
     
     # Calculate similarity loss
 
-    similarity_loss = Adaptermodel.calculate_similarity_loss(TOKEN, images)
+    similarity_loss = Adaptermodel.calculate_similarity_loss(TOKEN, images[0])
     image_clip_embeds = Adaptermodel.clip_model.encode_image(images)  # [batch_size, clip_embed_dim]
     optimizer = optim.Adam([TOKEN, image_clip_embeds], lr=learningRate)
     optimizer.zero_grad()
