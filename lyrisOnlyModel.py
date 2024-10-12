@@ -66,17 +66,15 @@ class MusicBERT2DiffusionAdapterWithCLIP(nn.Module):
     def calculate_similarity_loss(self, lyris_vector, images_path):
         image1_preprocess = self.clip_preprocess(Image.open(images_path)).unsqueeze(0).to(device)
         image_clip_embeds = self.clip_model.encode_image(image1_preprocess)  
-        
-        text = self.clip_model.encode_text(lyris_vector)
-        
+                
         
         image_clip_embeds = image_clip_embeds / image_clip_embeds.norm(dim=-1, keepdim=True)
-        text_clip_embeds = text / text.norm(dim=-1, keepdim=True)
+        text_clip_embeds = lyris_vector / lyris_vector.norm(dim=-1, keepdim=True)
 
         # similarity = (text_clip_embeds @ image_clip_embeds.T) 
         # print(similarity)
         # similarity = self.clip_model(text, image_clip_embeds)
-        similarity = cosine_similarity(text, image_clip_embeds, dim=-1)
+        similarity = cosine_similarity(text_clip_embeds, image_clip_embeds, dim=-1)
         one = torch.ones_like(similarity)
         similarity_loss = torch.sub(one, similarity).mean()
 
@@ -113,7 +111,10 @@ def traning(lyrisfile:str, BERT, bertTokenizer, Adaptermodel:MusicBERT2Diffusion
     diffusion_input = diffusion_input.to(device, dtype=diffusionModel.unet.dtype)
     images = diffusionModel(prompt=stringOfPrompt, latents=diffusion_input).images
     image_path = f"./generated_images/{songName}_{artist}.png"
+    nowtime = datetime.now().strftime("%Y%m%d_%H%M%S")
+    image_path = f"./generated_images/{songName}_{artist}_{nowtime}.png"
     images[0].save(image_path)
+    
     
     print('done images')
     
