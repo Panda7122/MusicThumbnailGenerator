@@ -123,7 +123,7 @@ def traning(lyrisfile:str, BERT, bertTokenizer, Adaptermodel:MusicBERT2Diffusion
     similarity_loss = Adaptermodel.calculate_similarity_loss(TOKEN, image_path)
     image_preprocess = Adaptermodel.clip_preprocess(Image.open(image_path)).unsqueeze(0).to(device)
     image_clip_embeds = Adaptermodel.clip_model.encode_image(image_preprocess)  # [batch_size, clip_embed_dim]
-    optimizer = optim.SGD(Adaptermodel.parameters(), lr=0.0001, betas=(0.9, 0.999), eps=1e-08, weight_decay=0, amsgrad=False)
+    optimizer = optim.Adam(Adaptermodel.parameters(), lr=0.0001, betas=(0.9, 0.999), eps=1e-08, weight_decay=0, amsgrad=False)
     # optimizer = optim.Adam([TOKEN, image_clip_embeds], lr=learningRate)
     optimizer.zero_grad()
     similarity_loss.backward() # calculate gradient
