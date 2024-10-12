@@ -81,16 +81,20 @@ def findURL(query):
     searching = Search(query, limit = 20)
     return searching.result()
 def download_audio(artist,title, url):
+    
     yt = YouTube(url, on_progress_callback = on_progress)
     print('download...')
     video = yt.streams.filter(only_audio=True).first()
     out_file = video.download(output_path=f'../trainingData/audio/')
     base, ext = os.path.splitext(out_file)
     print(out_file)
-    # new_file = '../trainingData/audio/'+artist+'-'+title + '.mp4'
-    # os.rename(out_file, new_file)
-    # print("target path = " + (new_file))
-    # print("mp4 has been successfully downloaded.")
+    new_file = '../trainingData/audio/'+artist+'-'+title + '.mp4'
+    try:
+        os.rename(out_file, new_file)
+        print("target path = " + (new_file))
+        print("mp4 has been successfully downloaded.")
+    except Exception as e:
+        print(f"Error: {e}")
 csv_path = '../kaggleData/small_song_lyrics.csv'
 df = pd.read_csv(csv_path)
 err = []
