@@ -45,6 +45,7 @@ class MusicBERT2DiffusionAdapterWithCLIP(nn.Module):
         return token_vectors
 
     def forward(self,  lyris_vector):
+        lyris_vector = lyris_vector.to(torch.float32)
         tokenSeq = self.linear1(lyris_vector) # 768 to 768
         tokenSeq = self.relu(tokenSeq) 
         
@@ -87,15 +88,19 @@ def traning(lyrisfile:str, BERT, bertTokenizer, Adaptermodel:MusicBERT2Diffusion
     
     with torch.no_grad():
         lyrisinputs = {key: value.to(device) for key, value in lyrisinputs.items()}
-        lyris_vector = BERT(**lyrisinputs).last_hidden_state[:, 0, :].to(device)
+        lyris_vector = BERT(**lyrisinputs).last_hidden_state[:, 0, :].to(device, dtype=torch.float32)
     # Get diffusion input
+    print('done Tokenizer')
     diffusion_input, TOKEN = Adaptermodel.get_diffusion_input(lyris_vector)
     print("Diffusion Input Shape:", diffusion_input.shape)
+    print('done forward')
     # diffusion_input = diffusion_input.view(diffusion_input.size(0), -1) 
     # Generate images using the diffusion model
     stringOfPrompt = f'cover for "{songName}" and artist is "{artist}", show "{songName}" as title and {artist} as subtitle'
     
+    diffusion_input = diffusion_input.to(device, dtype=diffusionModel.unet.dtype)
     images = diffusionModel(prompt=stringOfPrompt, latents=diffusion_input).images
+    print('done image')
     
     # Calculate similarity loss
 
@@ -106,12 +111,17 @@ def traning(lyrisfile:str, BERT, bertTokenizer, Adaptermodel:MusicBERT2Diffusion
     similarity_loss.backward() # calculate gradient
     optimizer.step()
 
+    print('done backward')
     print("Similarity Loss:", similarity_loss.item())
     print('saving model')
     nowtime = datetime.now().strftime("%Y%m%d_%H%M%S")
     model_path = f"./savePoint/model_{nowtime}.pt"
     Adaptermodel.save_dict_model(model_path)
-    
+    # Save the generated images
+    for i, image in enumerate(images):
+        image_path = f"./generated_images/{songName}_{artist}_{i}.png"
+        image.save(image_path)
+        print(f"Image saved at {image_path}")
 def predict(lyrisfile:str, BERT, bertTokenizer, Adaptermodel:MusicBERT2DiffusionAdapterWithCLIP, diffusionModel, songName, artist):
     # Initialize the model
     lyrisinputs = bertTokenizer(lyrisfile, return_tensors="pt", padding=True, truncation=True, max_length=Adaptermodel.bert_dim)
@@ -154,7 +164,7 @@ def main():
         lyrisfile = row['Lyric']
         artist = row['Artist']
         title = row['Title']
-        traning(lyrisfile, bert_model, tokenizer, model, diffusionModel, title, artist)
+        traning(lyrisfile, bert_model, tokenizer, model, diffusionModel, title, artist, 0.0001)
     model.save_Model(f"./DoneModel.pt")
     print('done')
 if __name__ == "__main__":

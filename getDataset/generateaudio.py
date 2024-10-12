@@ -25,19 +25,19 @@ import tensorflow as tf
 import librosa
 ssl._create_default_https_context = ssl._create_stdlib_context
 def mp3toWav(title, artist):
-    audio_dir = "./trainingData/audio/"
+    audio_dir = "../trainingData/audio/"
     mp3File = None
     for file in os.listdir(audio_dir):
         if file.startswith(artist + '-' + title) and file.endswith('.mp3'):
-            mp3File = "./trainingData/audio/"+artist+'-'+title +'.mp3'
+            mp3File = "../trainingData/audio/"+artist+'-'+title +'.mp3'
             break
     if mp3File == None:
-        mp3File = "./trainingData/audio/"+artist+'-'+title +'.mp4'
+        mp3File = "../trainingData/audio/"+artist+'-'+title +'.mp4'
         
     if not mp3File:
         raise FileNotFoundError(f"No mp4 file found for {artist} - {title}")
-    wavFile = "./trainingData/audio/"+artist+'-'+title + '.wav'
-    midFile = "./trainingData/midi/"
+    wavFile = "../trainingData/audio/"+artist+'-'+title + '.wav'
+    midFile = "../trainingData/midi/"
     
     subprocess.call(['ffmpeg', '-i', mp3File, 
                  wavFile])
@@ -58,13 +58,13 @@ def mp3toWav(title, artist):
     # if os.path.exists(wavFile):
     #     os.remove(wavFile)
     # # Rename the generated MIDI file
-    # old_midi_file = f'./trainingData/midi/{artist}-{title}_basic_pitch.mid'
-    # # trashwav = f'./trainingData/midi/{artist}-{title}_basic_pitch.wav'
+    # old_midi_file = f'../trainingData/midi/{artist}-{title}_basic_pitch.mid'
+    # # trashwav = f'../trainingData/midi/{artist}-{title}_basic_pitch.wav'
     # # os.remove(trashwav)
-    # # trashcsv = f'./trainingData/midi/{artist}-{title}_basic_pitch.csv'
+    # # trashcsv = f'../trainingData/midi/{artist}-{title}_basic_pitch.csv'
     # # os.remove(trashcsv)
     
-    # new_midi_file = f'./trainingData/midi/{artist}-{title}.mid'
+    # new_midi_file = f'../trainingData/midi/{artist}-{title}.mid'
     # if os.path.exists(old_midi_file):
     #     os.rename(old_midi_file, new_midi_file)
     #     print(f"Renamed {old_midi_file} to {new_midi_file}")
@@ -84,14 +84,14 @@ def download_audio(artist,title, url):
     yt = YouTube(url, on_progress_callback = on_progress)
     print('download...')
     video = yt.streams.filter(only_audio=True).first()
-    out_file = video.download(output_path=f'./trainingData/audio/')
+    out_file = video.download(output_path=f'../trainingData/audio/')
     base, ext = os.path.splitext(out_file)
     print(out_file)
     new_file = '../trainingData/audio/'+artist+'-'+title + '.mp4'
     os.rename(out_file, new_file)
     print("target path = " + (new_file))
     print("mp4 has been successfully downloaded.")
-csv_path = '/home/Panda/Desktop/courses/project/kaggleData/small_song_lyrics.csv'
+csv_path = '../kaggleData/small_song_lyrics.csv'
 df = pd.read_csv(csv_path)
 err = []
 correct = []
@@ -99,8 +99,8 @@ for index, row in df.iterrows():
     artist = row['Artist']
     title = row['Title']
     print(f"Artist: {artist}, Title: {title}")
-    wav_file_path = f'./trainingData/audio/{artist}-{title}.wav'
-    midi_file_path = f'./trainingData/midi/{artist}-{title}.mid'
+    wav_file_path = f'../trainingData/audio/{artist}-{title}.wav'
+    midi_file_path = f'../trainingData/midi/{artist}-{title}.mid'
     if os.path.exists(wav_file_path):
         print(f"{wav_file_path} already exists, skipping download.")
         continue
@@ -127,7 +127,7 @@ for index, row in df.iterrows():
                 break
         except Exception as e:
             print(f"Attempt {attempts + 1} failed: {e}")
-            driver.quit()
+            # driver.quit()
         attempts += 1
     if video_url:
         video_url = re.sub(r'&pp=.*', '', video_url)
