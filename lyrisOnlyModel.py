@@ -167,7 +167,19 @@ def main():
     diffusionModel = StableDiffusionPipeline.from_pretrained(diffusionModelName,
                                                variant="fp16", torch_dtype=torch.float16, cache_dir=cacheLoc)
     print('done init')
-    
+    save_point_dir = "./savePoint"
+    if not os.path.exists(save_point_dir):
+        os.makedirs(save_point_dir)
+
+    # Check if there are any saved models in the savePoint directory
+    saved_models = [f for f in os.listdir(save_point_dir) if f.endswith('.pt')]
+    if saved_models:
+        # Sort the saved models by modification time and load the latest one
+        latest_model_path = max([os.path.join(save_point_dir, f) for f in saved_models], key=os.path.getmtime)
+        print(f"Loading model from {latest_model_path}")
+        model.load_state_dict(torch.load(latest_model_path))
+    else:
+        print("No saved model found, starting from scratch")
     # Move models to the appropriate device
     bert_model.to(device)
     model.to(device)
