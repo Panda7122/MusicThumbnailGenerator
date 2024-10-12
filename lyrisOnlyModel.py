@@ -167,6 +167,7 @@ def main():
     bert_model.eval()
     # Directory containing MIDI files
     lyrics_df = pd.read_csv('./kaggleData/small_song_lyrics.csv')
+    print('done read csv')
 
     # Iterate over the lyrics
     for index, row in lyrics_df.iterrows():
