@@ -87,10 +87,10 @@ def download_audio(artist,title, url):
     out_file = video.download(output_path=f'../trainingData/audio/')
     base, ext = os.path.splitext(out_file)
     print(out_file)
-    new_file = '../trainingData/audio/'+artist+'-'+title + '.mp4'
-    os.rename(out_file, new_file)
-    print("target path = " + (new_file))
-    print("mp4 has been successfully downloaded.")
+    # new_file = '../trainingData/audio/'+artist+'-'+title + '.mp4'
+    # os.rename(out_file, new_file)
+    # print("target path = " + (new_file))
+    # print("mp4 has been successfully downloaded.")
 csv_path = '../kaggleData/small_song_lyrics.csv'
 df = pd.read_csv(csv_path)
 err = []
