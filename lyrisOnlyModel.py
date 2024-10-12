@@ -66,6 +66,7 @@ class MusicBERT2DiffusionAdapterWithCLIP(nn.Module):
     def calculate_similarity_loss(self, lyris_vector, images):
         images = self.clip_preprocess(images)
         images = images.to(device)  # Move images to the same device as the model
+        print(f"Images shape after preprocessing: {images.shape}")
         image_clip_embeds = self.clip_model.encode_image(images)  # [batch_size, clip_embed_dim]
         text = self.clip_model.encode_text(lyris_vector)
         image_clip_embeds = image_clip_embeds / image_clip_embeds.norm(dim=-1, keepdim=True)
