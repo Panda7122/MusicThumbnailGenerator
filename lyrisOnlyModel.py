@@ -100,7 +100,7 @@ def traning(lyrisfile:str, BERT, bertTokenizer, Adaptermodel:MusicBERT2Diffusion
     
     diffusion_input = diffusion_input.to(device, dtype=diffusionModel.unet.dtype)
     images = diffusionModel(prompt=stringOfPrompt, latents=diffusion_input).images
-    print('done image')
+    print('done images')
     
     # Calculate similarity loss
 
