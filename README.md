@@ -2,6 +2,9 @@
 
 ## discription
 
+this is a adapter to make midii+lyric to a diffusion model input that can generate this music's cover
+at this project, I use ...
+
 ## reference
 
 - [diffusion model](https://huggingface.co/CompVis/stable-diffusion-v1-4)
