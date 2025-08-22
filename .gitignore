@@ -1,0 +1,172 @@
+.cache
+.pytest_cache
+.venv
+.vscode
+__pycache__
+cache
+fairseq/
+muzic/
+YourMT3/examples/
+YourMT3/envir/
+kaggleData/
+generated_images/
+models/
+musicbert_cache/
+output/
+runs/
+modelEnv/
+YourMT3/
+muzic/.ipynb_checkpoints/
+muzic/.DS_Store
+projectMidterm.pdf
+專題期中報告.pdf
+# Generated thumbnails (large image set removed from history)
+trainingData/thumbnails/
+# JetBrains PyCharm IDE
+fairseq/.idea/
+
+# Byte-compiled / optimized / DLL files
+fairseq/__pycache__/
+fairseq/*.py[cod]
+fairseq/*$py.class
+
+# C extensions
+fairseq/*.so
+
+# macOS dir files
+fairseq/.DS_Store
+
+# Distribution / packaging
+fairseq/.Python
+fairseq/env/
+fairseq/build/
+fairseq/develop-eggs/
+fairseq/dist/
+fairseq/downloads/
+fairseq/eggs/
+fairseq/.eggs/
+fairseq/lib/
+fairseq/lib64/
+fairseq/parts/
+fairseq/sdist/
+fairseq/var/
+fairseq/wheels/
+fairseq/*.egg-info/
+fairseq/.installed.cfg
+fairseq/*.egg
+
+# Checkpoints
+fairseq/checkpoints
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+fairseq/*.manifest
+fairseq/*.spec
+
+# Installer logs
+fairseq/pip-log.txt
+fairseq/pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+fairseq/htmlcov/
+fairseq/.tox/
+fairseq/.coverage
+fairseq/.coverage.*
+fairseq/.cache
+fairseq/nosetests.xml
+fairseq/coverage.xml
+fairseq/*.cover
+fairseq/.hypothesis/
+
+# Translations
+fairseq/*.mo
+fairseq/*.pot
+
+# Django stuff:
+fairseq/*.log
+fairseq/local_settings.py
+
+# Flask stuff:
+fairseq/instance/
+fairseq/.webassets-cache
+
+# Scrapy stuff:
+fairseq/.scrapy
+
+# Sphinx documentation
+fairseq/docs/_build/
+
+# PyBuilder
+fairseq/target/
+
+# Jupyter Notebook
+fairseq/.ipynb_checkpoints
+
+# pyenv
+fairseq/.python-version
+
+# celery beat schedule file
+fairseq/celerybeat-schedule
+
+# SageMath parsed files
+fairseq/*.sage.py
+
+# dotenv
+fairseq/.env
+
+# virtualenv
+fairseq/.venv
+fairseq/venv/
+fairseq/ENV/
+
+# Spyder project settings
+fairseq/.spyderproject
+fairseq/.spyproject
+
+# Rope project settings
+fairseq/.ropeproject
+
+# mkdocs documentation
+fairseq//site
+
+# mypy
+fairseq/.mypy_cache/
+
+# Generated files
+fairseq/fairseq/temporal_convolution_tbc
+fairseq/fairseq/modules/*_layer/*_forward.cu
+fairseq/fairseq/modules/*_layer/*_backward.cu
+fairseq/fairseq/version.py
+
+# data
+fairseq/data-bin/
+
+# reranking
+fairseq/examples/reranking/rerank_data
+
+# Cython-generated C++ source files
+fairseq/fairseq/data/data_utils_fast.cpp
+fairseq/fairseq/data/token_block_utils_fast.cpp
+
+# VSCODE
+fairseq/.vscode/ftp-sync.json
+fairseq/.vscode/settings.json
+
+# Experimental Folder
+fairseq/experimental/*
+
+# Weights and Biases logs
+fairseq/wandb/
+
+# YourMT3 model
+YourMT3/
+
+# input embeddings
+input/
+testing.py
+
+# env dirs
+YourMT3/envir/
+modelEnv/
+*.pyc

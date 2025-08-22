@@ -1,0 +1,18 @@
+numpy
+music21
+tensorflow
+seaborn
+cython==3.0.8
+transformers>=4.39.1
+tqdm>=4.66.2
+datasets>=2.18.0
+pretty_midi>=0.2.10
+Image
+# clip @ git+https://github.com/openai/CLIP.git@dcba3cb2e2827b402d2701e7e1c7d9fed8a20ef1
+matplotlib
+torchaudio
+tensorboardX
+git+https://github.com/pytorch/fairseq@336942734c85791a90baa373c212d27e7c722662#egg=fairseq
+scikit-learn==0.21.3
+miditoolkit==0.1.14
+torch
