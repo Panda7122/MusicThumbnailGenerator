@@ -7,9 +7,13 @@ at this project, I use ...
 
 ## how to use
 first use `source ./modelEnv/env388/bin/activate` into virtual envirment
+
 use `python3 generate_image.py`
+
 and input artist and song name
+
 it will auto download song's lyrics and music
+
 and generate its cover image
 
 ## performance
@@ -19,6 +23,7 @@ the loss of decoder
 ![Decoder Training Loss](generated_images/20250606_015613/decoder_training_loss.png)
 
 ## reference
+- [dataset](https://www.kaggle.com/datasets/deepshah16/song-lyrics-dataset)
 - [bert](https://arxiv.org/abs/1810.04805)
 - [diffusion model](https://huggingface.co/CompVis/stable-diffusion-v1-4)
 - [microsoft musicBert](https://microsoft.github.io/muzic/musicbert/)
@@ -26,6 +31,7 @@ the loss of decoder
 - [LP-MusicCaps](https://github.com/seungheondoh/lp-music-caps)
 - [Qiu_Image_Generation_Associated_CVPR_2018_paper](https://openaccess.thecvf.com/content_cvpr_2018_workshops/papers/w49/Qiu_Image_Generation_Associated_CVPR_2018_paper.pdf)
 - [Performance-MIDI to Score](https://arxiv.org/abs/2410.00210v1)
+- [DALI](https://github.com/gabolsgabs/DALI/tree/master)
 
 ## issue
 
@@ -34,7 +40,8 @@ the loss of decoder
 
 ## Thanks
 
-王兆偉
-鍾詠傑
-葉梅珍 教授
-王鈞右 教授
+- 葉梅珍 教授
+- 王鈞右 教授
+- 王兆偉
+- 鍾詠傑
+- 吳文元
